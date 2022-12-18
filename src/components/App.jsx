@@ -24,13 +24,7 @@ class App extends Component {
     const prevSearchValue = prevState.searchValue;
     const { searchValue, currentPage } = this.state;
     if (prevSearchValue !== searchValue || prevPage !== currentPage) {
-      try {
-        this.getImages(searchValue, currentPage);
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        this.loaderToggle(false);
-      }
+      this.getImages(searchValue, currentPage);
     }
   }
 
@@ -62,6 +56,11 @@ class App extends Component {
       .then(response => {
         const receivedImages = response.data.hits;
         this.addNewImages(receivedImages);
+        this.loaderToggle(false);
+      })
+      .catch(error => {
+        this.loaderToggle(false);
+        alert(error.message);
       });
   }
 
