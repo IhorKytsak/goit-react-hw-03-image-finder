@@ -19,6 +19,21 @@ class App extends Component {
     currentPage: 1,
   };
 
+  componentDidUpdate(_prevProps, prevState) {
+    const prevPage = prevState.currentPage;
+    const prevSearchValue = prevState.searchValue;
+    const { searchValue, currentPage } = this.state;
+    if (prevSearchValue !== searchValue || prevPage !== currentPage) {
+      try {
+        this.getImages(searchValue, currentPage);
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        this.loaderToggle(false);
+      }
+    }
+  }
+
   toggleModal = () => {
     this.setState(({ showModal }) => ({ showModal: !showModal }));
   };
@@ -47,10 +62,6 @@ class App extends Component {
       .then(response => {
         const receivedImages = response.data.hits;
         this.addNewImages(receivedImages);
-        this.loaderToggle(false);
-        this.setState(prevState => ({
-          currentPage: prevState.currentPage + 1,
-        }));
       });
   }
 
@@ -58,19 +69,22 @@ class App extends Component {
     if (searchValue.trim() === '') {
       return;
     }
+
+    if (searchValue === this.state.searchValue) {
+      return;
+    }
+
     this.setState({
       searchValue: searchValue,
       images: [],
       currentPage: 1,
     });
-    const page = 1;
-
-    this.getImages(searchValue, page);
   };
 
   loadMoreHandler = () => {
-    this.loaderToggle(true);
-    this.getImages(this.state.searchValue, this.state.currentPage);
+    this.setState(prevState => ({
+      currentPage: prevState.currentPage + 1,
+    }));
   };
 
   render() {
