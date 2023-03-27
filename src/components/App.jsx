@@ -75,8 +75,7 @@ class App extends Component {
   };
 
   render() {
-    const { searchValue, images, showLoader, modalImage, showModal } =
-      this.state;
+    const { images, showLoader, modalImage, showModal } = this.state;
     return (
       <div className="App">
         <Searchbar onSubmit={this.searchFormHandler} />
