@@ -75,7 +75,8 @@ class App extends Component {
   };
 
   render() {
-    const { images, showLoader, modalImage, showModal } = this.state;
+    const { searchValue, images, showLoader, modalImage, showModal } =
+      this.state;
     return (
       <div className="App">
         <Searchbar onSubmit={this.searchFormHandler} />
@@ -84,7 +85,7 @@ class App extends Component {
 
         {showLoader && <Loader />}
         {images.length > 0 && <Button loadMore={this.loadMoreHandler} />}
-        {images.length === 0 && (
+        {images.length === 0 && searchValue !== '' && !showLoader && (
           <h3 style={{ margin: '0 auto' }}>Nothing found :(</h3>
         )}
         {showModal && (
