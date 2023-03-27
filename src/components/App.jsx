@@ -1,30 +1,39 @@
-import React, { Component } from 'react';
-import axios from 'axios';
+import { Component } from 'react';
 
 import Loader from './Loader/Loader';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Button from './Button/Button';
 import Modal from './Modal/Modal';
-
-const apiKey = '32099217-de7cf2504ca4eed95138fd014';
+import { fetchImages } from '../api/pixabayAPI';
 
 class App extends Component {
   state = {
     searchValue: '',
     images: [],
+    page: 1,
+    showLoader: false,
     modalImage: '',
     showModal: false,
-    showLoader: false,
-    currentPage: 1,
   };
 
   componentDidUpdate(_prevProps, prevState) {
-    const prevPage = prevState.currentPage;
-    const prevSearchValue = prevState.searchValue;
-    const { searchValue, currentPage } = this.state;
-    if (prevSearchValue !== searchValue || prevPage !== currentPage) {
-      this.getImages(searchValue, currentPage);
+    const { page: prevPage, searchValue: prevSearchValue } = prevState;
+
+    const { searchValue, page } = this.state;
+    if (prevSearchValue !== searchValue || prevPage !== page) {
+      this.loaderToggle(true);
+
+      fetchImages(searchValue, page)
+        .then(receivedImages => {
+          this.addNewImages(receivedImages);
+        })
+        .catch(error => {
+          alert(error.message);
+        })
+        .finally(() => {
+          this.loaderToggle(false);
+        });
     }
   }
 
@@ -32,10 +41,14 @@ class App extends Component {
     this.setState(({ showModal }) => ({ showModal: !showModal }));
   };
 
-  addNewImages = newImages => {
-    const newSearchArray = [...this.state.images, ...newImages];
+  loaderToggle = boolean => {
+    return this.setState({ showLoader: boolean });
+  };
 
-    this.setState({ images: newSearchArray });
+  addNewImages = newImages => {
+    this.setState(({ images }) => ({
+      images: [...images, ...newImages],
+    }));
   };
 
   openLargeImage = linkImg => {
@@ -43,32 +56,7 @@ class App extends Component {
     this.toggleModal();
   };
 
-  loaderToggle = boolean => {
-    return this.setState({ showLoader: boolean });
-  };
-
-  getImages(words, page) {
-    this.loaderToggle(true);
-    axios
-      .get(
-        `https://pixabay.com/api/?q=${words}&page=${page}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-      .then(response => {
-        const receivedImages = response.data.hits;
-        this.addNewImages(receivedImages);
-        this.loaderToggle(false);
-      })
-      .catch(error => {
-        this.loaderToggle(false);
-        alert(error.message);
-      });
-  }
-
   searchFormHandler = searchValue => {
-    if (searchValue.trim() === '') {
-      return;
-    }
-
     if (searchValue === this.state.searchValue) {
       return;
     }
@@ -76,35 +64,34 @@ class App extends Component {
     this.setState({
       searchValue: searchValue,
       images: [],
-      currentPage: 1,
+      page: 1,
     });
   };
 
   loadMoreHandler = () => {
     this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
+      page: prevState.page + 1,
     }));
   };
 
   render() {
+    const { searchValue, images, showLoader, modalImage, showModal } =
+      this.state;
     return (
       <div className="App">
-        {this.state.showModal && (
-          <Modal closeModal={this.toggleModal}>
-            <img src={this.state.modalImage} alt="modal" />
-          </Modal>
-        )}
         <Searchbar onSubmit={this.searchFormHandler} />
 
-        {this.state.searchValue !== '' && (
-          <ImageGallery
-            imagesArray={this.state.images}
-            modalHandler={this.openLargeImage}
-          />
+        <ImageGallery images={images} modalHandler={this.openLargeImage} />
+
+        {showLoader && <Loader />}
+        {images.length > 0 && <Button loadMore={this.loadMoreHandler} />}
+        {images.length === 0 && (
+          <h3 style={{ margin: '0 auto' }}>Nothing found :(</h3>
         )}
-        {this.state.showLoader && <Loader />}
-        {this.state.searchValue !== '' && this.state.images.length > 0 && (
-          <Button loadMore={this.loadMoreHandler} />
+        {showModal && (
+          <Modal closeModal={this.toggleModal}>
+            <img src={modalImage} alt="modal" />
+          </Modal>
         )}
       </div>
     );
