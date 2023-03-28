@@ -7,4 +7,14 @@ export const fetchImages = (words, page) =>
     .get(
       `https://pixabay.com/api/?q=${words}&page=${page}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=12`
     )
-    .then(response => response.data.hits);
+    .then(response => {
+      const images = response.data.hits.map(
+        ({ id, webformatURL, largeImageURL }) => ({
+          id,
+          webformatURL,
+          largeImageURL,
+        })
+      );
+
+      return { images, totalImages: response.data.totalHits };
+    });

@@ -17,6 +17,8 @@ class App extends Component {
     showModal: false,
   };
 
+  totalImages = 0;
+
   componentDidUpdate(_prevProps, prevState) {
     const { page: prevPage, searchValue: prevSearchValue } = prevState;
 
@@ -25,8 +27,9 @@ class App extends Component {
       this.loaderToggle(true);
 
       fetchImages(searchValue, page)
-        .then(receivedImages => {
-          this.addNewImages(receivedImages);
+        .then(({ images, totalImages }) => {
+          this.totalImages = totalImages;
+          this.addNewImages(images);
         })
         .catch(error => {
           alert(error.message);
@@ -72,11 +75,21 @@ class App extends Component {
     this.setState(prevState => ({
       page: prevState.page + 1,
     }));
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth',
+      });
+    }, 500);
   };
 
   render() {
     const { searchValue, images, showLoader, modalImage, showModal } =
       this.state;
+
+    const showMoreButton = this.totalImages > images.length;
+
     return (
       <div className="App">
         <Searchbar onSubmit={this.searchFormHandler} />
@@ -84,7 +97,7 @@ class App extends Component {
         <ImageGallery images={images} modalHandler={this.openLargeImage} />
 
         {showLoader && <Loader />}
-        {images.length > 0 && <Button loadMore={this.loadMoreHandler} />}
+        {showMoreButton && <Button loadMore={this.loadMoreHandler} />}
         {images.length === 0 && searchValue !== '' && !showLoader && (
           <h3 style={{ margin: '0 auto' }}>Nothing found :(</h3>
         )}
